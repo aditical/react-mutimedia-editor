@@ -1,7 +1,7 @@
 export default function MediaUpload() {
     return (
         <div className="">
-            A
+            <div>Add Media</div>
         </div>
     );
 }
