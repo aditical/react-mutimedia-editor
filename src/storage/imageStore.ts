@@ -1,17 +1,25 @@
 // Open or create the IndexedDB database
-const openDB = async () => {
-    return new Promise<IDBDatabase>((resolve, reject) => {
-        const request = indexedDB.open('imageStoreDB', 1);
+const openDB = async (type: string) => {
+    const dbName = `${type}StoreDB`;
+    const storeName = `${type}s`;
+
+    // Check if DB already exists (basic detection using indexedDB.databases)
+    const existingDBs = await indexedDB.databases?.();
+    const existingDB = existingDBs?.find((db) => db.name === dbName);
+    const version = existingDB ? existingDB.version ?? 1 : 1;
+
+    return new Promise<{ db: IDBDatabase; storeName: string }>((resolve, reject) => {
+        const request = indexedDB.open(dbName, version);
 
         request.onupgradeneeded = (event) => {
             const db = (event.target as IDBRequest).result;
-            if (!db.objectStoreNames.contains('images')) {
-                db.createObjectStore('images', { keyPath: 'id' });
+            if (!db.objectStoreNames.contains(storeName)) {
+                db.createObjectStore(storeName, { keyPath: 'id' });
             }
         };
 
         request.onerror = () => reject('Error opening IndexedDB');
-        request.onsuccess = () => resolve(request.result);
+        request.onsuccess = () => resolve({ db: request.result, storeName });
     });
 };
 
@@ -26,22 +34,18 @@ const convertToBase64 = (file: Blob): Promise<string> => {
 };
 
 // Store image in IndexedDB
-export const storeImage = async (image: Blob, id: string) => {
-    // Do the async work first — convert image to base64 before touching the DB
+export const storeImage = async (image: Blob, id: string, type: string) => {
     const base64Image = await convertToBase64(image);
+    const { db, storeName } = await openDB(type);
 
-    // Now open the DB and run the transaction
-    const db = await openDB();
-    const transaction = db.transaction('images', 'readwrite');
-    const store = transaction.objectStore('images');
+    const transaction = db.transaction(storeName, 'readwrite');
+    const store = transaction.objectStore(storeName);
 
-    // Do the put while the transaction is active
     store.put({ id, image: base64Image });
 
-    // Return a promise that resolves or rejects based on transaction status
     return new Promise<void>((resolve, reject) => {
         transaction.oncomplete = () => resolve();
-        transaction.onerror = () => reject('Error storing image');
+        transaction.onerror = () => reject(`Error storing ${type}`);
         transaction.onabort = () => reject('Transaction aborted');
     });
 };
@@ -49,14 +53,14 @@ export const storeImage = async (image: Blob, id: string) => {
 
 
 // Get all images from IndexedDB
-export const getAllImages = async () => {
-    const db = await openDB();
-    const transaction = db.transaction('images', 'readonly');
-    const store = transaction.objectStore('images');
+export const getAllImages = async (type: string) => {
+    const { db, storeName } = await openDB(type);
+    const transaction = db.transaction(storeName, 'readonly');
+    const store = transaction.objectStore(storeName);
     const request = store.getAll();
 
     return new Promise<Array<{ id: string; image: string }>>((resolve, reject) => {
         request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject('Error retrieving images');
+        request.onerror = () => reject(`Error retrieving ${storeName}`);
     });
 };

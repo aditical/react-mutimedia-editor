@@ -1,6 +1,6 @@
 "use client";
 
-import ImageStorage from "@/components/ImageStorage/ImageStorage";
+import FileUpload from "@/components/ImageStorage/ImageStorage";
 import { useTab } from "@/context/TabContext";
 
 export default function MediaUpload() {
@@ -8,9 +8,9 @@ export default function MediaUpload() {
     const handleTabContents = () => {
         switch (activeTab) {
             case 1:
-                return <ImageStorage />;
+                return <FileUpload type="image" />;
             case 2:
-                return <div>Video</div>;
+                return <FileUpload type="video" />;
             case 3:
                 return <div>Audio</div>;
             case 4:
@@ -18,7 +18,7 @@ export default function MediaUpload() {
             case 5:
                 return <div>URL</div>;
             default:
-                return <ImageStorage />;
+                return <FileUpload type="image" />;
         }
     }
     return (
