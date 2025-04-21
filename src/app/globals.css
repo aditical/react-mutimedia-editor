@@ -16,14 +16,14 @@
   font-style: normal;
 }
 :root {
-  --foreground: #ffffff;
+  --foreground: #bfbfbf;
   --background: #141316;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground: #bfbfbf;
   }
 }
 
