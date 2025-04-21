@@ -32,10 +32,19 @@ const ImageUpload: React.FC = () => {
 
     return (
         <div>
-            <input type="file" accept="image/*" multiple onChange={handleImageUpload} />
-            <div>
+            <label htmlFor="file-upload" className="custom-file-upload">
+                Choose File
+            </label>
+            <input type="file" id="file-upload" accept="image/*" multiple onChange={handleImageUpload} />
+            <div className='grid grid-cols-4 gap-4'>
                 {images.map((image, index) => (
-                    <img key={index} src={image} alt={`Stored image ${index}`} width="100" />
+                    <div key={index} className='w-full aspect-square'>
+                        <img
+                            src={image}
+                            alt={`Stored image ${index}`}
+                            className='w-full h-full object-cover rounded'
+                        />
+                    </div>
                 ))}
             </div>
         </div>
