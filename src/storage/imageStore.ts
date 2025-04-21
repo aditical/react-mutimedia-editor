@@ -27,18 +27,26 @@ const convertToBase64 = (file: Blob): Promise<string> => {
 
 // Store image in IndexedDB
 export const storeImage = async (image: Blob, id: string) => {
+    // Do the async work first — convert image to base64 before touching the DB
+    const base64Image = await convertToBase64(image);
+
+    // Now open the DB and run the transaction
     const db = await openDB();
     const transaction = db.transaction('images', 'readwrite');
     const store = transaction.objectStore('images');
-    const base64Image = await convertToBase64(image);
 
+    // Do the put while the transaction is active
     store.put({ id, image: base64Image });
 
+    // Return a promise that resolves or rejects based on transaction status
     return new Promise<void>((resolve, reject) => {
         transaction.oncomplete = () => resolve();
         transaction.onerror = () => reject('Error storing image');
+        transaction.onabort = () => reject('Transaction aborted');
     });
 };
+
+
 
 // Get all images from IndexedDB
 export const getAllImages = async () => {
